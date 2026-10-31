@@ -48,9 +48,9 @@ bundled-sqlcipher = [
     "bundled",
     "dep:sqlcipher-src",
 ]
-bundled-sqlcipher-vendored-openssl = [
+bundled-sqlcipher-awslc = [
     "bundled-sqlcipher",
-    "openssl-sys/vendored",
+    "dep:aws-lc-sys",
 ]
 bundled-windows = [
     "cc",
@@ -83,8 +83,9 @@ with-asan = []
 name = "libsqlite3_sys"
 path = "src/lib.rs"
 
-[dependencies.openssl-sys]
-version = "0.9.103"
+[dependencies.aws-lc-sys]
+version = "=0.46.0"
+default-features = false
 optional = true
 
 [build-dependencies.bindgen]
