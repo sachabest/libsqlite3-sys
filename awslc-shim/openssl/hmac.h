@@ -9,7 +9,12 @@
 #ifndef SQLCIPHER_AWSLC_SHIM_H
 #define SQLCIPHER_AWSLC_SHIM_H
 
+#ifdef _MSC_VER
+/* MSVC has no #include_next; the build passes the path of AWS-LC's header. */
+#include SQLCIPHER_AWSLC_HMAC_H
+#else
 #include_next <openssl/hmac.h>
+#endif
 #include <openssl/digest.h>
 #include <stddef.h>
 #include <string.h>

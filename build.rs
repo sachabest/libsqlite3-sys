@@ -263,7 +263,15 @@ mod build_bundled {
                 cfg.include(shim);
                 // Headers from the same aws-lc-sys that rustls links; its
                 // symbol-prefix header makes the calls resolve to that copy.
-                cfg.include(env::var("DEP_AWS_LC_0_46_0_INCLUDE").unwrap());
+                let awslc_include = env::var("DEP_AWS_LC_0_46_0_INCLUDE").unwrap();
+                cfg.include(&awslc_include);
+                // MSVC has no #include_next, so the shim names AWS-LC's own
+                // <openssl/hmac.h> by path there.
+                let real_hmac = format!("{}/openssl/hmac.h", awslc_include.replace('\\', "/"));
+                // windows.h would pull in wincrypt.h, whose X509_NAME and
+                // X509_PUBKEY macros break AWS-LC's typedefs of the same names.
+                cfg.define("NOCRYPT", None);
+                cfg.define("SQLCIPHER_AWSLC_HMAC_H", Some(format!("\"{real_hmac}\"").as_str()));
                 // cargo will resolve downstream to the static lib in
                 // aws-lc-sys
             } else if use_openssl {
