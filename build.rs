@@ -92,7 +92,7 @@ fn main() {
                 "cargo:warning=For backwards compatibility, feature 'sqlcipher' overrides
                 features 'bundled' and 'bundled-windows'. If you want a bundled build of
                 SQLCipher (available for the moment only on Unix), use feature 'bundled-sqlcipher'
-                or 'bundled-sqlcipher-awslc' to use the AWS-LC crypto from aws-lc-sys."
+                or 'bundled-sqlcipher-vendored-openssl' to also bundle OpenSSL crypto."
             );
         }
         build_linked::main(&out_dir, &out_path);
@@ -211,7 +211,7 @@ mod build_bundled {
                 }
                 (lib_dir, inc_dir) => match find_openssl_dir(&host, &target) {
                     None => {
-                        if is_windows && !cfg!(feature = "bundled-sqlcipher-awslc") {
+                        if is_windows && !cfg!(feature = "bundled-sqlcipher-vendored-openssl") {
                             panic!(
                                 "Missing environment variable OPENSSL_DIR or OPENSSL_DIR is not set"
                             )
@@ -251,29 +251,10 @@ mod build_bundled {
                 },
             };
 
-            if cfg!(feature = "bundled-sqlcipher-awslc") {
-                // The shim goes first so that its <openssl/hmac.h> is found
-                // before AWS-LC's. It supplies the EVP_MAC calls that
-                // sqlcipher.c uses and AWS-LC lacks.
-                let shim = concat!(env!("CARGO_MANIFEST_DIR"), "/awslc-shim");
-                println!("cargo:rerun-if-changed={shim}");
-                // Lets p2p-awslc-shim-test compile its tests against the same
-                // headers (DEP_SQLITE3_AWSLC_SHIM).
-                println!("cargo:awslc_shim={shim}");
-                cfg.include(shim);
-                // Headers from the same aws-lc-sys that rustls links; its
-                // symbol-prefix header makes the calls resolve to that copy.
-                let awslc_include = env::var("DEP_AWS_LC_0_46_0_INCLUDE").unwrap();
-                cfg.include(&awslc_include);
-                // MSVC has no #include_next, so the shim names AWS-LC's own
-                // <openssl/hmac.h> by path there.
-                let real_hmac = format!("{}/openssl/hmac.h", awslc_include.replace('\\', "/"));
-                // windows.h would pull in wincrypt.h, whose X509_NAME and
-                // X509_PUBKEY macros break AWS-LC's typedefs of the same names.
-                cfg.define("NOCRYPT", None);
-                cfg.define("SQLCIPHER_AWSLC_HMAC_H", Some(format!("\"{real_hmac}\"").as_str()));
+            if cfg!(feature = "bundled-sqlcipher-vendored-openssl") {
+                cfg.include(env::var("DEP_OPENSSL_INCLUDE").unwrap());
                 // cargo will resolve downstream to the static lib in
-                // aws-lc-sys
+                // openssl-sys
             } else if use_openssl {
                 cfg.include(inc_dir.to_string_lossy().as_ref());
                 let lib_name = if is_windows { "libcrypto" } else { "crypto" };

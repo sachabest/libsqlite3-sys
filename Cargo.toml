@@ -13,7 +13,7 @@
 edition = "2024"
 rust-version = "1.88.0"
 name = "libsqlite3-sys"
-version = "0.39.0"
+version = "0.40.0"
 authors = ["The rusqlite developers"]
 build = "build.rs"
 links = "sqlite3"
@@ -48,9 +48,9 @@ bundled-sqlcipher = [
     "bundled",
     "dep:sqlcipher-src",
 ]
-bundled-sqlcipher-awslc = [
+bundled-sqlcipher-vendored-openssl = [
     "bundled-sqlcipher",
-    "dep:aws-lc-sys",
+    "openssl-sys/vendored",
 ]
 bundled-windows = [
     "cc",
@@ -83,9 +83,8 @@ with-asan = []
 name = "libsqlite3_sys"
 path = "src/lib.rs"
 
-[dependencies.aws-lc-sys]
-version = "=0.46.0"
-default-features = false
+[dependencies.openssl-sys]
+version = "0.9.103"
 optional = true
 
 [build-dependencies.bindgen]
@@ -112,7 +111,7 @@ optional = true
 default-features = false
 
 [build-dependencies.sqlcipher-src]
-version = "=419.0.6"
+version = "=420.0.0"
 optional = true
 
 [build-dependencies.syn]
