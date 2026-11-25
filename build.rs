@@ -191,6 +191,12 @@ mod build_bundled {
             cfg.flag("-DSQLITE_HAS_CODEC")
                 .flag("-DSQLITE_TEMP_STORE=2")
                 .flag("-DSQLITE_EXTRA_INIT=sqlcipher_extra_init")
+                // SQLite runs SQLITE_EXTRA_INIT after it has marked itself initialised and
+                // released its init mutex, so a thread that opens a connection in that gap
+                // skips the wait and finds SQLCipher not set up. This runs the same
+                // function under the mutex, before the flag is set. SQLCipher's own
+                // `#error` needs the plain one too; it returns at once the second time.
+                .flag("-DSQLITE_EXTRA_INIT_MUTEXED=sqlcipher_extra_init")
                 .flag("-DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown")
                 .flag("-DHAVE_STDINT_H=1");
 
